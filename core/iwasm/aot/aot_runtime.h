@@ -256,7 +256,8 @@ typedef struct AOTModule {
     AOTCompData *comp_data;
 #endif
 
-#if WASM_ENABLE_LIBC_WASI != 0
+// Faasm still wants these WASI flags
+#if defined(WAMR_FAASM) || (WASM_ENABLE_LIBC_WASI != 0)
     WASIArguments wasi_args;
     bool import_wasi_api;
 #endif
