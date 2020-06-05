@@ -7,6 +7,12 @@
 #include "platform_api_extension.h"
 #include "sgx_rsrv_mem_mngr.h"
 
+// Faasm: additional import to workaround a discrepancy with function
+// signatures
+#ifdef WAMR_FAASM
+#include <enclave/inside/ocalls_wamr.h>
+#endif
+
 #if WASM_ENABLE_SGX_IPFS != 0
 #include "sgx_ipfs.h"
 #endif
@@ -82,6 +88,7 @@ os_printf(const char *message, ...)
 {
     int bytes_written = 0;
 
+#ifndef WAMR_FAASM
     if (print_function != NULL) {
         char msg[FIXED_BUFFER_SIZE] = { '\0' };
         va_list ap;
@@ -90,6 +97,21 @@ os_printf(const char *message, ...)
         va_end(ap);
         bytes_written += print_function(msg);
     }
+#else
+    // Faasm: WAMR has changed the signature for os_print_function_t making it
+    // return an integer. The way we define ocalls (through our own header file
+    // and not using the Edger8r's generated one) means that there's a
+    // signature discrepancy with functions that return one value. The simplest
+    // fix is to hack the os_printf and os_vprintf implementations for SGX.
+    char msg[FIXED_BUFFER_SIZE] = { '\0' };
+    va_list ap;
+    va_start(ap, message);
+    vsnprintf(msg, FIXED_BUFFER_SIZE, message, ap);
+    va_end(ap);
+    int actual_written;
+    ocallLogWamr(&actual_written, msg);
+    bytes_written += actual_written;
+#endif
 
     return bytes_written;
 }
@@ -99,11 +121,24 @@ os_vprintf(const char *format, va_list arg)
 {
     int bytes_written = 0;
 
+#ifndef WAMR_FAASM
     if (print_function != NULL) {
         char msg[FIXED_BUFFER_SIZE] = { '\0' };
         vsnprintf(msg, FIXED_BUFFER_SIZE, format, arg);
         bytes_written += print_function(msg);
     }
+#else
+    // Faasm: WAMR has changed the signature for os_print_function_t making it
+    // return an integer. The way we define ocalls (through our own header file
+    // and not using the Edger8r's generated one) means that there's a
+    // signature discrepancy with functions that return one value. The simplest
+    // fix is to hack the os_printf and os_vprintf implementations for SGX.
+    char msg[FIXED_BUFFER_SIZE] = { '\0' };
+    vsnprintf(msg, FIXED_BUFFER_SIZE, format, arg);
+    int actual_written;
+    ocallLogWamr(&actual_written, msg);
+    bytes_written += actual_written;
+#endif
 
     return bytes_written;
 }
