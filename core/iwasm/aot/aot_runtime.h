@@ -235,7 +235,14 @@ typedef struct AOTModule {
     /* is indirect mode or not */
     bool is_indirect_mode;
 
-#if WASM_ENABLE_LIBC_WASI != 0
+// Faasm still wants these WASI flags
+#if defined(WAMR_FAASM) || (WASM_ENABLE_LIBC_WASI != 0)
+#if WASM_ENABLE_JIT != 0
+    WASMModule *wasm_module;
+    AOTCompContext *comp_ctx;
+    AOTCompData *comp_data;
+#endif
+
     WASIArguments wasi_args;
     bool import_wasi_api;
 #endif

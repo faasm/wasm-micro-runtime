@@ -489,7 +489,16 @@ create_memory_info(AOTCompContext *comp_ctx, AOTFuncContext *func_ctx,
     bool is_shared_memory;
 #endif
 
+// Faasm - We always want to allow for memory changing in Faasm and don't want the
+// optimisations in WAMR that are triggered from this flag.
+#ifdef WAMR_FAASM
+    // 25/05/2022 - We may need this, but it is giving problems in the code
+    // generation.
+    // func_ctx->mem_space_unchanged = false;
     func_ctx->mem_space_unchanged = mem_space_unchanged;
+#else
+    func_ctx->mem_space_unchanged = mem_space_unchanged;
+#endif
 
     memory_count = module->memory_count + module->import_memory_count;
     /* If the module dosen't have memory, reserve
