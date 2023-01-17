@@ -2050,6 +2050,8 @@ aot_create_comp_context(AOTCompData *comp_data, aot_comp_option_t option)
         option->enable_simd = false;
     }
 
+// Faasm - we always disable simd so it is safe to comment this out
+#if WAMR_BUILD_SIMD != 0
     if (option->enable_simd) {
         char *tmp;
         bool check_simd_ret;
@@ -2071,6 +2073,7 @@ aot_create_comp_context(AOTCompData *comp_data, aot_comp_option_t option)
             goto fail;
         }
     }
+#endif /* WAMR_BUILD_SIMD */
 
     if (!(target_data_ref =
               LLVMCreateTargetDataLayout(comp_ctx->target_machine))) {
