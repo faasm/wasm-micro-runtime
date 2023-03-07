@@ -206,6 +206,7 @@ os_munmap(void *addr, size_t size)
 int
 os_mprotect(void *addr, size_t size, int prot)
 {
+#ifndef WAMR_FAASM
     int mprot = 0;
     sgx_status_t st = 0;
     uint64 aligned_size, page_size;
@@ -225,6 +226,9 @@ os_mprotect(void *addr, size_t size, int prot)
                   (uintptr_t)addr, size, prot);
 
     return (st == SGX_SUCCESS ? 0 : -1);
+#else
+    return 0;
+#endif
 }
 
 void

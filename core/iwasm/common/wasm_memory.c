@@ -508,7 +508,8 @@ wasm_get_default_memory(WASMModuleInstance *module_inst)
         return NULL;
 }
 
-#ifndef OS_ENABLE_HW_BOUND_CHECK
+// #ifndef OS_ENABLE_HW_BOUND_CHECK
+#ifndef WAMR_FAASM
 bool
 wasm_enlarge_memory_internal(WASMModuleInstance *module, uint32 inc_page_count)
 {
@@ -586,6 +587,7 @@ wasm_enlarge_memory_internal(WASMModuleInstance *module, uint32 inc_page_count)
            (uint32)total_size_new - total_size_old);
 
     if (heap_size > 0) {
+        // TODO: is this causing the problem?
         if (mem_allocator_migrate(memory->heap_handle,
                                   (char *)heap_data_old
                                       + (memory_data_new - memory_data_old),
