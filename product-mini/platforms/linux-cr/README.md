@@ -24,7 +24,7 @@ Inside the container, you may run:
 ./bin/build.sh [--clean]
 
 # Build WASM apps
-./wasm-apps/build.sh
+./bin/build_wasm.sh
 ```
 
 ## Run the demo
