@@ -15,6 +15,7 @@ RUN apt update \
         g++-multilib \
         git \
         gnupg \
+        libboost-program-options \
         libgcc-9-dev \
         lib32gcc-9-dev \
         libprotobuf-dev \
