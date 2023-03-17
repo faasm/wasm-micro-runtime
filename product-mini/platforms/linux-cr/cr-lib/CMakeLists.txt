@@ -14,6 +14,9 @@ set(PB_SRC exec_env.pb.cc)
 set(PB_HDR exec_env.pb.h)
 protobuf_generate_cpp(exec_env.proto ${PB_SRC} ${PB_HDR})
 
+# --------------------
+# C/R Library
+# --------------------
 
 add_library(cr-lib
     checkpoint.cpp
@@ -23,4 +26,6 @@ add_library(cr-lib
     ${PB_HDR}
 )
 target_include_directories(cr-lib PUBLIC ${CMAKE_BINARY_DIR})
-target_link_libraries(cr-lib protobuf)
+target_link_libraries(cr-lib PUBLIC
+    protobuf
+)

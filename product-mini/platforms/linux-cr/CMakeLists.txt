@@ -1,6 +1,5 @@
 cmake_minimum_required (VERSION 3.23)
-
-project (iwasmcr)
+project (iwasmcr LANGUAGES C CXX)
 
 # --------------------
 # CMake Configuration
@@ -8,7 +7,7 @@ project (iwasmcr)
 
 set(CMAKE_C_STANDARD 99)
 set(CMAKE_CXX_STANDARD 20)
-set(CMAKE_BUILD_COMPILE_COMMANDS ON)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_VERBOSE_MAKEFILE OFF)
 if (NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE Release)
@@ -59,8 +58,14 @@ target_compile_options(vmlib PRIVATE -Wno-unused-command-line-argument)
 # Dependencies
 # --------------------
 
-find_package(Boost 1.81.0 REQUIRED)
-find_package(Protobuf 3.21.9 REQUIRED)
+# find_package(Boost REQUIRED)
+# find_package(protobuf REQUIRED)
+#
+# if (Boost_FOUND)
+#     message(STATUS "hello: ${BOOST_INCLUDE_DIRS}")
+#     message(STATUS "hello: ${Boost_INCLUDE_DIRS}")
+#     message(STATUS "hello: ${Boost_LIBRARIES}")
+# endif()
 
 # --------------------
 # C/R Library
@@ -72,10 +77,13 @@ add_subdirectory(cr-lib)
 # iwasm-cr binary
 # --------------------
 
+message(STATUS "Include paths: ${CMAKE_INCLUDE_PATH}")
+
 include(${SHARED_DIR}/utils/uncommon/shared_uncommon.cmake)
 add_executable(iwasm-cr main.cpp ${UNCOMMON_SHARED_SOURCE})
 set_target_properties(iwasm-cr PROPERTIES POSITION_INDEPENDENT_CODE ON)
-target_link_libraries (iwasm-cr
+target_include_directories(iwasm-cr PUBLIC ${Boost_INCLUDE_DIRS})
+target_link_libraries(iwasm-cr
     vmlib
     cr-lib
     ${LLVM_AVAILABLE_LIBS}
