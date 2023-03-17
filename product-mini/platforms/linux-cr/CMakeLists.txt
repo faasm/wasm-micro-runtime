@@ -56,6 +56,13 @@ add_library(vmlib ${WAMR_RUNTIME_LIB_SOURCE})
 target_compile_options(vmlib PRIVATE -Wno-unused-command-line-argument)
 
 # --------------------
+# Dependencies
+# --------------------
+
+find_package(Boost 1.81.0 REQUIRED)
+find_package(Protobuf 3.21.9 REQUIRED)
+
+# --------------------
 # C/R Library
 # --------------------
 
