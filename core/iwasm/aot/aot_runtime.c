@@ -1595,6 +1595,7 @@ aot_set_exception_with_id(AOTModuleInstance *module_inst, uint32 id)
     if (id != EXCE_ALREADY_THROWN)
         wasm_set_exception_with_id(module_inst, id);
 #ifdef OS_ENABLE_HW_BOUND_CHECK
+    // TODO: this check is making us seg-fault during proc_exit!
     wasm_runtime_access_exce_check_guard_page();
 #endif
 }
