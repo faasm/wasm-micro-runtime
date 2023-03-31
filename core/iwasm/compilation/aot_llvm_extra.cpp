@@ -20,7 +20,6 @@
 #include <llvm/ExecutionEngine/GenericValue.h>
 #include <llvm/ExecutionEngine/JITEventListener.h>
 #include <llvm/ExecutionEngine/RTDyldMemoryManager.h>
-// Faasm: comment this out
 #include <llvm/ExecutionEngine/Orc/LLJIT.h>
 #include <llvm/IR/DerivedTypes.h>
 #include <llvm/IR/Module.h>
@@ -51,7 +50,6 @@
 #include "aot_llvm.h"
 
 using namespace llvm;
-// Faasm: comment this out
 using namespace llvm::orc;
 
 LLVM_C_EXTERN_C_BEGIN
