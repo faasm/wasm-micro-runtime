@@ -5,7 +5,11 @@
 
 #include "platform_api_vmcore.h"
 #include "platform_api_extension.h"
+#if defined(WAMR_FAASM) && defined(FAASM_SGX_HARDWARE_MODE)
+#include "sgx_mm.h"
+#else
 #include "sgx_rsrv_mem_mngr.h"
+#endif
 
 // Faasm: additional import to workaround a discrepancy with function
 // signatures
@@ -172,7 +176,6 @@ os_mmap(void *hint, size_t size, int prot, int flags, os_file_handle file)
     int mprot = 0;
     uint64 aligned_size, page_size;
     void *ret = NULL;
-    sgx_status_t st = 0;
 
     if (os_is_handle_valid(&file)) {
         os_printf("os_mmap(size=%u, prot=0x%x, file=%x) failed: file is not "
@@ -186,6 +189,36 @@ os_mmap(void *hint, size_t size, int prot, int flags, os_file_handle file)
 
     if (aligned_size >= UINT32_MAX)
         return NULL;
+
+#if defined(WAMR_FAASM) && defined(FAASM_SGX_HARDWARE_MODE)
+    // In Faasm we want to use the EDMM API for dynamic memory management.
+    // The main header is in /opt/intel/sgxsd/include/sgx_mm.h
+    // Annoyingly, the symbols seem to be only defined in the HW mode libraries
+    // (not in the simulation ones).
+    int ret_code = sgx_mm_alloc(NULL, aligned_size, SGX_EMA_COMMIT_NOW, NULL, NULL, &ret);
+    if (ret == NULL || ret_code != 0) {
+        os_printf("os_mm_mmap(size=%u, aligned size=%lu, prot=0x%x) failed: %i\n",
+                  size, aligned_size, prot, ret_code);
+
+        return NULL;
+    }
+
+    if (prot & MMAP_PROT_READ)
+        mprot |= SGX_EMA_PROT_READ;
+    if (prot & MMAP_PROT_WRITE)
+        mprot |= SGX_EMA_PROT_WRITE;
+    if (prot & MMAP_PROT_EXEC)
+        mprot |= SGX_EMA_PROT_EXEC;
+
+    ret_code = sgx_mm_modify_permissions(ret, aligned_size, mprot);
+    if (ret_code != 0) {
+        os_printf("os_mmap(size=%u, prot=0x%x) failed to set protect: %s\n",
+                  size, prot, strerror(ret_code));
+        sgx_mm_dealloc(ret, aligned_size);
+        return NULL;
+    }
+#else
+    sgx_status_t st = 0;
 
     ret = sgx_alloc_rsrv_mem(aligned_size);
     if (ret == NULL) {
@@ -208,6 +241,7 @@ os_mmap(void *hint, size_t size, int prot, int flags, os_file_handle file)
         sgx_free_rsrv_mem(ret, aligned_size);
         return NULL;
     }
+#endif
 
     return ret;
 }
@@ -219,7 +253,15 @@ os_munmap(void *addr, size_t size)
 
     page_size = getpagesize();
     aligned_size = (size + page_size - 1) & ~(page_size - 1);
+
+#if defined(WAMR_FAASM) && defined(FAASM_SGX_HARDWARE_MODE)
+    int ret_code = sgx_mm_dealloc(addr, aligned_size);
+
+    if (ret_code != 0)
+        os_printf("os_munmap: error deallocating memory");
+#else
     sgx_free_rsrv_mem(addr, aligned_size);
+#endif
 }
 
 int
@@ -232,6 +274,17 @@ os_mprotect(void *addr, size_t size, int prot)
     page_size = getpagesize();
     aligned_size = (size + page_size - 1) & ~(page_size - 1);
 
+#if defined(WAMR_FAASM) && defined(FAASM_SGX_HARDWARE_MODE)
+    if (prot & MMAP_PROT_READ)
+        mprot |= SGX_EMA_PROT_READ;
+    if (prot & MMAP_PROT_WRITE)
+        mprot |= SGX_EMA_PROT_WRITE;
+    if (prot & MMAP_PROT_EXEC)
+        mprot |= SGX_EMA_PROT_EXEC;
+
+    int ret_code = sgx_mm_modify_permissions(addr, aligned_size, mprot);
+    if (ret_code != 0)
+#else
     if (prot & MMAP_PROT_READ)
         mprot |= SGX_PROT_READ;
     if (prot & MMAP_PROT_WRITE)
@@ -240,6 +293,7 @@ os_mprotect(void *addr, size_t size, int prot)
         mprot |= SGX_PROT_EXEC;
     st = sgx_tprotect_rsrv_mem(addr, aligned_size, mprot);
     if (st != SGX_SUCCESS)
+#endif
         os_printf("os_mprotect(addr=0x%" PRIx64 ", size=%u, prot=0x%x) failed.",
                   (uintptr_t)addr, size, prot);
 
