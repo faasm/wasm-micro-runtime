@@ -32,9 +32,14 @@ GET_LINEAR_MEMORY_SIZE(const WASMMemoryInstance *memory)
 static inline void
 SET_LINEAR_MEMORY_SIZE(WASMMemoryInstance *memory, uint64 size)
 {
+#ifndef WAMR_FAASM
+    // FIXME: this will come back to bite us, just skip for the time being
     SHARED_MEMORY_LOCK(memory);
+#endif
     BH_ATOMIC_64_STORE(memory->memory_data_size, size);
+#ifndef WAMR_FAASM
     SHARED_MEMORY_UNLOCK(memory);
+#endif
 }
 #else
 #define GET_LINEAR_MEMORY_SIZE(memory) memory->memory_data_size
