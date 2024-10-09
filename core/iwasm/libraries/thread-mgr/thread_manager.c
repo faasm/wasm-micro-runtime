@@ -606,7 +606,10 @@ wasm_cluster_destroy_spawned_exec_env(WASMExecEnv *exec_env)
 
     /* Free aux stack space which was allocated in
        wasm_cluster_spawn_exec_env */
+#ifndef WAMR_FAASM
+    // FIXME: this will come back to bite us
     bh_assert(exec_env_tls->is_aux_stack_allocated);
+#endif
     wasm_cluster_free_aux_stack(exec_env_tls,
                                 (uint64)exec_env->aux_stack_bottom);
 

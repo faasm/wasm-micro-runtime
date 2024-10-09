@@ -193,7 +193,6 @@ os_mmap(void *hint, size_t size, int prot, int flags, os_file_handle file)
 #if defined(WAMR_FAASM)
     // SGX MM does not support the 32BIT flag
     if (flags == MMAP_MAP_32BIT) {
-        os_printf("skipping MMAP\n");
         return NULL;
     }
 #endif
