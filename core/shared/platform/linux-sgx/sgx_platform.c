@@ -190,11 +190,20 @@ os_mmap(void *hint, size_t size, int prot, int flags, os_file_handle file)
     if (aligned_size >= UINT32_MAX)
         return NULL;
 
+#if defined(WAMR_FAASM)
+    // SGX MM does not support the 32BIT flag
+    if (flags == MMAP_MAP_32BIT) {
+        os_printf("skipping MMAP\n");
+        return NULL;
+    }
+#endif
+
 #if defined(WAMR_FAASM) && defined(FAASM_SGX_HARDWARE_MODE)
     // In Faasm we want to use the EDMM API for dynamic memory management.
     // The main header is in /opt/intel/sgxsd/include/sgx_mm.h
     // Annoyingly, the symbols seem to be only defined in the HW mode libraries
     // (not in the simulation ones).
+
     int ret_code = sgx_mm_alloc(NULL, aligned_size, SGX_EMA_COMMIT_NOW, NULL, NULL, &ret);
     if (ret == NULL || ret_code != 0) {
         os_printf("os_mm_mmap(size=%u, aligned size=%lu, prot=0x%x) failed: %i\n",
